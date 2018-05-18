@@ -24,6 +24,7 @@ from omero_parade.utils import \
     get_screen_well_image_ids, \
     get_well_image_ids
 from omeroweb.webgateway.views import _annotations
+import omero.grid
 
 logger = logging.getLogger(__name__)
 
@@ -161,4 +162,9 @@ def get_data(request, data_name, conn):
                     # only have a dictionary of well_id: img_id for the
                     # current plate.
                     pass
-        return table_data
+
+        column = headers[named_column_index]
+        data_type = "number"
+        if column.__class__ is omero.grid.StringColumn:
+            data_type = "label"
+        return table_data, data_type

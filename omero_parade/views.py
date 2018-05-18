@@ -153,20 +153,32 @@ def get_data(request, data_name, conn=None, **kwargs):
             if hasattr(module, 'get_dataproviders'):
                 dp = module.get_dataproviders(request, conn)
                 if data_name in dp:
-                    data = module.get_data(request, data_name, conn)
-                    values = numpy.array(data.values())
-                    bins = 10
-                    if NUMPY_GT_1_11_0:
-                        # numpy.histogram() only supports bin calculation
-                        # from 1.11.0 onwards
-                        bins = 'auto'
-                    histogram, bin_edges = numpy.histogram(values, bins=bins)
-                    return JsonResponse({
-                        'data': data,
-                        'min': numpy.amin(values).item(),
-                        'max': numpy.amax(values).item(),
-                        'histogram': histogram.tolist()
-                    })
+                    data, data_type = module.get_data(request, data_name, conn)
+                    if data_type == "label":
+                        unique_values = list(set(data.values()))
+                        return JsonResponse({
+                            'data': data,
+                            'min': 0,
+                            'max': 0,
+                            'histogram': [],
+                            'uniqueValues': unique_values,
+                            'type': 'label'
+                        })
+                    else:
+                        values = numpy.array(data.values())
+                        bins = 10
+                        if NUMPY_GT_1_11_0:
+                            # numpy.histogram() only supports bin calculation
+                            # from 1.11.0 onwards
+                            bins = 'auto'
+                        histogram, bin_edges = numpy.histogram(values, bins=bins)
+                        return JsonResponse({
+                            'data': data,
+                            'min': numpy.amin(values).item(),
+                            'max': numpy.amax(values).item(),
+                            'histogram': histogram.tolist(),
+                            'type': 'number'
+                        })
         except ImportError:
             pass
 
