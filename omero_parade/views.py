@@ -154,18 +154,31 @@ def get_data(request, data_name, conn=None, **kwargs):
                 dp = module.get_dataproviders(request, conn)
                 if data_name in dp:
                     data = module.get_data(request, data_name, conn)
-                    values = numpy.array(data.values())
-                    bins = 10
-                    if NUMPY_GT_1_11_0:
-                        # numpy.histogram() only supports bin calculation
-                        # from 1.11.0 onwards
-                        bins = 'auto'
-                    histogram, bin_edges = numpy.histogram(values, bins=bins)
+                    histogram = []
+                    unique_values = []
+                    min_value = 0
+                    max_value = 0
+                    key_0 = data.keys()[0]
+                    if isinstance(data[key_0], basestring):
+                        unique_values = list(set(data.values()))
+                    else:
+                        values = numpy.array(data.values())
+                        bins = 10
+                        if NUMPY_GT_1_11_0:
+                            # numpy.histogram() only supports bin calculation
+                            # from 1.11.0 onwards
+                            bins = 'auto'
+                        histogram, bin_edges = numpy.histogram(
+                            values, bins=bins)
+                        min_value = numpy.amin(values).item()
+                        max_value = numpy.amax(values).item()
+                        histogram = histogram.tolist()
                     return JsonResponse({
                         'data': data,
-                        'min': numpy.amin(values).item(),
-                        'max': numpy.amax(values).item(),
-                        'histogram': histogram.tolist()
+                        'min': min_value,
+                        'max': max_value,
+                        'histogram': histogram,
+                        'uniqueValues': unique_values
                     })
         except ImportError:
             pass
