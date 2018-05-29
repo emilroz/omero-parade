@@ -19,15 +19,48 @@
 import React, { Component } from 'react';
 
 import Well from './Well';
+import gsvlScreenPlot from '../svgComponents/gsvlScreenPlot'
 
 
 class PlateGrid extends React.Component {
 
     constructor(props) {
         super(props);
+        let screen_display = null;
+    }
+
+    componentWillUpdate() {
+        const plateData = this.props.plateData;
+        const plateGrids = plateData.map(
+            v => v.grid
+        );
+        console.log("update-plateData", plateData);
+        console.log("update-plateGrids", plateGrids);
+        let wellClicked = ble => { return };
+        if (this.screen_display == null && plateGrids.length > 0)  {
+            this.screen_display = gsvlScreenPlot(
+                "#gsvlScreenPlot", plateGrids, "x", "y",
+                this.props.handleImageWellClicked);
+            this.screen_display.render();
+        } else if (plateGrids.length > 0) {
+            this.screen_display._tile_data(plateGrids);
+            this.screen_display.render();
+        }
     }
 
     componentDidMount() {
+        const plateData = this.props.plateData;
+        const plateGrids = plateData.map(
+            v => v.grid
+        );
+        console.log("plateData", plateData);
+        console.log("plateGrids", plateGrids);
+        let wellClicked = ble => { return };
+        if (plateGrids.length > 0) {
+            this.screen_display = gsvlScreenPlot(
+                "#gsvlScreenPlot", plateGrids, "x", "y", wellClicked);
+            this.screen_display.render();
+        }
         $(this.refs.plateGrid).selectable({
             filter: 'td.well',
             distance: 2,
@@ -127,12 +160,21 @@ class PlateGrid extends React.Component {
     }
 
     render() {
-        const plateGrids = this.props.plateData.map(
-            v => this.renderPlateGrid(v)
+        /**
+            const plateGrids = this.props.plateData.map(
+                v => this.renderPlateGrid(v)
+            );
+            console.log("render plateGrids", plateGrids);
+            <div className="plateGrid" ref="plateGrid">
+                {plateGrids}
+            </div>
+        */
+        return (
+            <div>
+                <div id="gsvlScreenPlot">
+                </div>
+            </div>
         );
-        return <div className="plateGrid" ref="plateGrid">
-            {plateGrids}
-        </div>;
     }
 }
 
