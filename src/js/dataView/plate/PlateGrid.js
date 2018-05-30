@@ -20,6 +20,7 @@ import React, { Component } from 'react';
 
 import Well from './Well';
 import gsvlScreenPlot from '../svgComponents/gsvlScreenPlot'
+import gsvlScreenPlotEvents from '../svgComponents/gsvlScreenPlotEvents'
 
 
 class PlateGrid extends React.Component {
@@ -29,22 +30,36 @@ class PlateGrid extends React.Component {
         let screen_display = null;
     }
 
-    componentWillUpdate() {
+    componentDidUpdate() {
         const plateData = this.props.plateData;
         const plateGrids = plateData.map(
             v => v.grid
         );
-        console.log("update-plateData", plateData);
-        console.log("update-plateGrids", plateGrids);
-        let wellClicked = ble => { return };
+        const featureList = this.props.tableData;
+        const features = Object.keys(featureList);
         if (this.screen_display == null && plateGrids.length > 0)  {
             this.screen_display = gsvlScreenPlot(
                 "#gsvlScreenPlot", plateGrids, "x", "y",
                 this.props.handleImageWellClicked);
-            this.screen_display.render();
+            
+            this.screen_display.set_color_scale_div("#color_scale");
+            d3.select("#input_grid_size").attr("value", this.screen_display.change_tile_size()[0]);
+            d3.select("#input_margin_size").attr("value", this.screen_display.change_margin_size()[0]);
+            d3.select("#input_offset_size").attr("value", this.screen_display.change_offset_size());
+            d3.select("#input_aspect_ratio").attr("value", this.screen_display.change_aspect_ratio());
+
+            if (features.length > 0) {
+                this.screen_display.change_parade_analytics(featureList);
+            } else {
+                this.screen_display.render();
+            }
         } else if (plateGrids.length > 0) {
             this.screen_display._tile_data(plateGrids);
-            this.screen_display.render();
+            if (features.length > 0) {
+                this.screen_display.change_parade_analytics(featureList);
+            } else {
+                this.screen_display.render();
+            }
         }
     }
 
@@ -53,12 +68,10 @@ class PlateGrid extends React.Component {
         const plateGrids = plateData.map(
             v => v.grid
         );
-        console.log("plateData", plateData);
-        console.log("plateGrids", plateGrids);
-        let wellClicked = ble => { return };
         if (plateGrids.length > 0) {
             this.screen_display = gsvlScreenPlot(
-                "#gsvlScreenPlot", plateGrids, "x", "y", wellClicked);
+                "#gsvlScreenPlot", plateGrids, "x", "y",
+                this.props.handleImageWellClicked);
             this.screen_display.render();
         }
         $(this.refs.plateGrid).selectable({
@@ -142,7 +155,6 @@ class PlateGrid extends React.Component {
                 </tr>
             );
         });
-
         return (
             <table key={plateData.plateId}>
                 <tbody>
@@ -159,6 +171,119 @@ class PlateGrid extends React.Component {
         );
     }
 
+    handleGsvlScreenPlotChange(event, mode) {
+        if (this.screen_display === undefined) return;
+        gsvlScreenPlotEvents[mode](this.screen_display, event.target.value);
+    }
+
+    renderHeader() {
+        /**
+        {% for table in tables %}
+            <option value={{ table.id }} name="{{ table.name }}"> {{ table.name }} </option>
+        {% endfor %}
+        */
+        const featureList = this.props.tableData;
+        const features = Object.keys(featureList);
+        let options = [];
+        options.push(
+            <option key='-1tableFeatures' value="None" name="None">
+                None
+            </option>
+        );
+        for (let i = 0; i < features.length; i++) {
+            options.push(
+                <option key={i+'tableFeatures'} value={features[i]} name={features[i]}>
+                    {features[i]}
+                </option>
+            );
+        }
+        return (
+            <div className="omeroTablesHeader">
+            <table className="heatmapheader">
+                <thead>
+                    <tr>
+                    <th className="heatmapheader">View Mode:
+                        <select id="gsvl_viewing_mode"
+                                onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeDisplayMode")} }>
+                            <option value="Plate">Plate</option>
+                            <option value="Image">Image</option>
+                        </select>
+                    </th>
+
+                    <th className="heatmapheader">
+                        Table:
+                        <select id="heatmap_tableSelect" 
+                                onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "loadStatistics") } }>
+                            <option value="Need more data" name="Bulk annotation"> "Bulk annotation table" </option>
+                        </select>
+                    </th>
+                    <th className="heatmapheader">
+                        Color by:
+                        <select id="gsvl_color_property"
+                                onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeColorProperty")} }>
+                            { options }
+                        </select>
+                    </th>
+                    <th>
+                        <div id="color_scale"></div>
+                    </th>
+                    <th className="heatmapheader">
+                        Sort by:
+                        <select id="gsvl_sort_property"
+                                onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeSortProperty")} }>
+                            { options }
+                        </select>
+                    </th>
+
+                    </tr>
+                </thead>
+            </table>
+            <table className="heatmapheader">
+                <thead>
+                    <tr>
+                        <th className="heatmapheader"> Grid Settings:</th>
+                        <th className="heatmapheader">
+                        Size:
+                        <input id="input_grid_size"
+                               type='number'
+                               onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeTileSize")} }
+                               style={{width: '35px'}}></input>
+                    </th>
+                    <th className="heatmapheader">
+                        Margin:
+                        <input id="input_margin_size"
+                               type='number'
+                               onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeMarginSize")} }
+                               style={{width: '35px'}}/>
+                    </th>
+                    <th className="heatmapheader">
+                        Offset: 
+                        <input id="input_offset_size"
+                               type='number'
+                               onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeOffsetSize")} }
+                               style={{width: '35px'}}/>
+                    </th>
+                    <th className="heatmapheader">
+                    Aspect ratio:
+                    <input id="input_aspect_ratio"
+                           type='number'
+                           onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeAspectRatio")} }
+                           style={{width: '35px'}}/>
+                    </th>
+                    <th className="heatmapheader">
+                        <input id="input_thumnnails"
+                                type='checkbox'
+                                onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeThumbnailsRendering")} }/>
+                        Thumbnails?
+                    </th>
+                    <th>
+                    </th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    )}
+
     render() {
         /**
             const plateGrids = this.props.plateData.map(
@@ -169,8 +294,10 @@ class PlateGrid extends React.Component {
                 {plateGrids}
             </div>
         */
+        const gsvlScreenPlotHeader = this.renderHeader();
         return (
             <div>
+                { gsvlScreenPlotHeader }
                 <div id="gsvlScreenPlot">
                 </div>
             </div>

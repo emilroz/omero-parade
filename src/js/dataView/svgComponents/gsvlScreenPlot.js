@@ -20,6 +20,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
         _global_min = null,
         _global_max = null;
 
+    var _current_parade_keys = [];
     var _duration = 500;
     var div = d3.select("body").append("div")
                 .attr("class", "tooltip")
@@ -325,10 +326,10 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
           || _statistics.length == 0)
       {
           data = _flat_data.filter(function(d) {return d !== null});
-          console.log(data, _flat_data);
+          console.log("data:flat_data", data, _flat_data);
       } else {
           data = _flat_statistics.filter(function(d) {return d !== null});
-          console.log(data, _flat_statistics);
+          console.log("data:flat_stats", data, _flat_statistics);
       }
 
       canvas.selectAll(".images")
@@ -400,9 +401,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
           })
           .on('click', function(d) {
             if (d == null) return;
-              var message = ""
-              for (var attr in d) message +=  attr + ": " + d[attr] + "\n";
-              console.log(message);
+            _screen.image_clicked(d, event);
           })
     }
 
@@ -425,8 +424,6 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
       var check = canvas.selectAll(".images")
                         .filter(function(d) {return d[_sort_property] != null })
                         .sort(compare);
-      console.log("Check:")
-      console.log(check);
       canvas.selectAll(".images")
         .attr("x", function(d, i) {
           var x = _margin_x + (i % image_columns) * (_size_x + _margin_x);
@@ -633,6 +630,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
     _screen.change_tile_size = function(size) {
       console.log("Change tile size", size);
       if(!arguments.length) return [_size_x, _size_y];
+      if (size === undefined) return;
       _size_x = size;
       _size_y = _aspect_ratio * _size_x;
       _width = 2 * _offset + (_margin_x + _size_x) * _num_columns;
@@ -643,6 +641,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
 
     _screen.change_margin_size = function(size) {
         if(!arguments.length) return [_margin_x, _margin_y];
+        if (size === undefined) return;
         console.log("Change margin size", size);
         _margin_x = size;
         _margin_y = _margin_x;
@@ -654,6 +653,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
 
     _screen.change_aspect_ratio = function(size) {
         if(!arguments.length) return _aspect_ratio;
+        if (size === undefined) return;
         console.log("Change aspect ratio size", size);
         _aspect_ratio = size;
         _size_y = _aspect_ratio * _size_x;
@@ -665,6 +665,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
 
     _screen.change_offset_size = function(size) {
         if(!arguments.length) return _offset;
+        if (size === undefined) return;
         console.log("Change offset size", size);
         _offset = size;
         _width = 2 * _offset + (_margin_x + _size_x) * _num_columns;
@@ -703,6 +704,26 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
         _statistics = statistics.slice(0);
         _flat_statistics = this.flatten_3Darray(_statistics);
         this.render();
+    }
+
+    _screen.change_parade_analytics = function(analytics) {
+      const analytics_keys = Object.keys(analytics);
+      for (let i = 0; i < analytics_keys.length; i++) {
+        if (!_current_parade_keys.includes(analytics_keys[i])) {
+          _current_parade_keys.push(analytics_keys[i]);
+          for (let p = 0; p < _tile_data.length; p++) {
+            for (let r = 0; r < _tile_data[p].length; r++) {
+              for (let c in _tile_data[p][r]) {
+                if (_tile_data[p][r][c] === undefined || _tile_data[p][r][c] == null) continue;
+                const imageId = _tile_data[p][r][c].id
+                _tile_data[p][r][c][analytics_keys[i]] = 
+                  analytics[analytics_keys[i]].data[imageId];
+              }
+            }
+          }
+        }
+      }
+      this.render();
     }
 
     _screen.render_thumbnails = function(render_thumbnails) {
