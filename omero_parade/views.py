@@ -24,7 +24,7 @@ import omero.clients
 from base64 import b64decode
 from distutils.version import LooseVersion
 
-from django.http import Http404, JsonResponse
+from django.http import JsonResponse
 from omeroweb.webclient.decorators import login_required
 from omero.rtypes import rlong, unwrap
 from django.shortcuts import render
@@ -73,34 +73,20 @@ def get_long_or_default(request, name, default):
 
 
 @login_required()
-def api_field_list(request, conn=None, **kwargs):
-    """Return the min and max-indexed well samples for plate/run."""
-    plate_id = get_long_or_default(request, 'plate', None)
-    run_id = get_long_or_default(request, 'run', None)
-    if (plate_id is None and run_id is None):
-        raise Http404('Need to use ?plate=pid or ?run=runid')
-
+def api_field_list(request, plate_id, conn=None, **kwargs):
+    """Return the field indexes for a Plate."""
     q = conn.getQueryService()
-    sql = "select minIndex(ws), maxIndex(ws) from Well w " \
-        "join w.wellSamples ws"
 
+    sql = "SELECT DISTINCT indices(ws), ws.plateAcquisition.id FROM Well w " \
+        "JOIN w.wellSamples AS ws " \
+        "WHERE w.plate.id = :id"
     params = omero.sys.ParametersI()
-
-    if run_id is not None:
-        sql += " where ws.plateAcquisition.id=:runid"
-        params.add('runid', rlong(run_id))
-    if plate_id is not None:
-        sql += " where w.plate.id=:pid"
-        params.add('pid', rlong(plate_id))
-
-    fields = []
-
-    res = q.projection(sql, params, conn.SERVICE_OPTS)
-    res = [r for r in unwrap(res)[0] if r is not None]
-    if len(res) == 2:
-        fields = res
-
-    return JsonResponse({'data': fields})
+    params.addId(rlong(plate_id))
+    rows = q.projection(sql, params, conn.SERVICE_OPTS)
+    return JsonResponse({
+        'plateId': long(plate_id),
+        'data': [[unwrap(x), unwrap(y)] for x, y in rows]
+    })
 
 
 @login_required()
@@ -168,18 +154,31 @@ def get_data(request, data_name, conn=None, **kwargs):
                 dp = module.get_dataproviders(request, conn)
                 if data_name in dp:
                     data = module.get_data(request, data_name, conn)
-                    values = numpy.array(data.values())
-                    bins = 10
-                    if NUMPY_GT_1_11_0:
-                        # numpy.histogram() only supports bin calculation
-                        # from 1.11.0 onwards
-                        bins = 'auto'
-                    histogram, bin_edges = numpy.histogram(values, bins=bins)
+                    histogram = []
+                    unique_values = []
+                    min_value = 0
+                    max_value = 0
+                    key_0 = data.keys()[0]
+                    if isinstance(data[key_0], basestring):
+                        unique_values = list(set(data.values()))
+                    else:
+                        values = numpy.array(data.values())
+                        bins = 10
+                        if NUMPY_GT_1_11_0:
+                            # numpy.histogram() only supports bin calculation
+                            # from 1.11.0 onwards
+                            bins = 'auto'
+                        histogram, bin_edges = numpy.histogram(
+                            values, bins=bins)
+                        min_value = numpy.amin(values).item()
+                        max_value = numpy.amax(values).item()
+                        histogram = histogram.tolist()
                     return JsonResponse({
                         'data': data,
-                        'min': numpy.amin(values).item(),
-                        'max': numpy.amax(values).item(),
-                        'histogram': histogram.tolist()
+                        'min': min_value,
+                        'max': max_value,
+                        'histogram': histogram,
+                        'uniqueValues': unique_values
                     })
         except ImportError:
             pass

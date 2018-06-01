@@ -19,69 +19,139 @@
 import React, { Component } from 'react';
 
 import Well from './Well';
+import gsvlScreenPlot from '../svgComponents/gsvlScreenPlot'
+import gsvlScreenPlotEvents from '../svgComponents/gsvlScreenPlotEvents'
 
 
 class PlateGrid extends React.Component {
 
     constructor(props) {
         super(props);
+        let screen_display = null;
+    }
+
+    gsvlScreenUpdate() {
+        const plateData = this.props.plateData;
+        let plateGrids = plateData.map(
+            v => v.grid
+        );
+        const filteredPlateGrids = plateGrids.filter(Boolean);
+        console.log(filteredPlateGrids.length, plateGrids.length)
+        if (filteredPlateGrids.length !== plateGrids.length) {
+            console.log("Looks like Plates are still loading");
+            return;
+        }
+        const featureList = this.props.tableData;
+        const features = Object.keys(featureList);
+        const selected = this.props.selectedWellIds;
+        if (this.screen_display == null && filteredPlateGrids.length > 0)  {
+            console.log("Plate grids:", filteredPlateGrids);
+            for (let i = 0; i < filteredPlateGrids.length; i++) {
+                console.log(i, filteredPlateGrids[i]);
+            }
+            this.screen_display = gsvlScreenPlot(
+                "#gsvlScreenPlot", filteredPlateGrids, "x", "y",
+                this.props.handleImageWellClicked);
+            
+            this.screen_display.set_color_scale_div("#color_scale");
+            d3.select("#input_grid_size").attr("value", this.screen_display.change_tile_size()[0]);
+            d3.select("#input_margin_size").attr("value", this.screen_display.change_margin_size()[0]);
+            d3.select("#input_offset_size").attr("value", this.screen_display.change_offset_size());
+            d3.select("#input_aspect_ratio").attr("value", this.screen_display.change_aspect_ratio());
+            this.screen_display._selected_wells(selected);
+            if (features.length > 0) {
+                this.screen_display.change_parade_analytics(featureList);
+            } else {
+                this.screen_display.render();
+            }
+        } else if (filteredPlateGrids.length > 0) {
+            this.screen_display._selected_wells([]);
+            this.screen_display.render();
+            this.screen_display._tile_data(filteredPlateGrids);
+            this.screen_display._selected_wells(selected);
+            if (features.length > 0) {
+                this.screen_display.change_parade_analytics(featureList);
+            } else {
+                this.screen_display.render();
+            }
+        }
+    }
+
+    componentDidUpdate() {
+        console.log("PlateGrid-didUpdate");
+        this.gsvlScreenUpdate();
     }
 
     componentDidMount() {
+        console.log("PlateGrid-didMount");
+        const selected = this.props.selectedWellIds;
+        const plateData = this.props.plateData;
+        const plateGrids = plateData.map(
+            v => v.grid
+        );
+        if (this.screen_display == null && plateGrids.length > 0) {
+            console.log("Creating new screen display");
+            this.screen_display = gsvlScreenPlot(
+                "#gsvlScreenPlot", plateGrids, "x", "y",
+                this.props.handleImageWellClicked);
+            this.screen_display._selected_wells(selected).render();
+        }
         $(this.refs.plateGrid).selectable({
             filter: 'td.well',
             distance: 2,
             stop: () => {
                 // Make the same selection in the jstree etc
-                let ids = [];
-                $(".plateGrid .ui-selected").each(function(){
-                    ids.push(parseInt($(this).attr('data-wellid'), 10));
+                let images = [];
+                $(".plateGrid .ui-selected").each((index, element) => {
+                    const imageId = parseInt(
+                        element.getAttribute('data-imageid'), 10
+                    );
+                    const wellId = parseInt(
+                        element.getAttribute('data-wellid'), 10
+                    );
+                    const field = parseInt(
+                        element.getAttribute('field'), 10
+                    );
+                    images.push({
+                        id: imageId,
+                        wellId: wellId,
+                        field: field
+                    });
                 });
-                this.props.setImagesWellsSelected('well', ids);
+                this.props.setImagesWellsSelected('well', images);
             },
         });
     }
 
     componentWillUnmount() {
         // cleanup plugin
+        console.log("PlateGrid-willUnmount");
         $(this.refs.dataIcons).selectable( "destroy" );
     }
 
-    render() {
-        var data = this.props.plateData,
-            iconSize = this.props.iconSize,
+    renderPlateGrid(plateData) {
+        const iconSize = this.props.iconSize,
             placeholderStyle = {
                 width: iconSize + 'px',
                 height: iconSize + 'px',
             },
             selectedWellIds = this.props.selectedWellIds,
             handleImageWellClicked = this.props.handleImageWellClicked,
-            tableData = this.props.tableData,
             filteredIds = this.props.filteredImages.map(i => i.id);
-        if (!data) {
-            return (
-                <table />
-            )
-        }
-        var columnNames = data.collabels.map(function(l){
-            return (<th key={l}>{l}</th>);
-        });
-        var grid = data.grid;
-        var rows = data.rowlabels.map((r, rowIndex) => {
-            var wells = data.collabels.map((c, colIndex) => {
-                var well = grid[rowIndex][colIndex];
+        const columnNames = plateData.collabels.map(l => (<th key={l}>{l}</th>));
+        const grid = plateData.grid;
+        const rows = plateData.rowlabels.map((r, rowIndex) => {
+            const wells = plateData.collabels.map((c, colIndex) => {
+                const well = grid[rowIndex][colIndex];
                 if (well) {
-                    var hidden = (filteredIds !== undefined && filteredIds.indexOf(well.id) === -1);
-                    var selected = selectedWellIds.indexOf(well.wellId) > -1;
-                    // lookup this Well's data from heatmap
-                    // var heatmapValues = heatmapData && heatmapData[well.wellId+""];
-                    // tableData is mapped to Image IDs... (well.id is image ID!)
-                    var imgTableData = Object.keys(tableData).map(col => col + ": " + tableData[col].data[well.id])
+                    const hidden = (filteredIds !== undefined && filteredIds.indexOf(well.id) === -1);
+                    const selected = selectedWellIds.indexOf(well.wellId) > -1;
                     return (
                         <Well
                             key={well.wellId}
                             id={well.wellId}
                             iid={well.id}
+                            field={well.field}
                             thumb_url={this.props.thumbnails[well.id]}
                             selected={selected}
                             hidden={hidden}
@@ -89,14 +159,17 @@ class PlateGrid extends React.Component {
                             handleWellClick={(event) => {handleImageWellClicked(well, event)}}
                             row={r}
                             col={c}
-                            imgTableData={imgTableData} />
+                            heatmapTableData={this.props.heatmapTableData}
+                            tableData={this.props.tableData}
+                            viewMode={this.props.viewMode}
+                        />
                     )
-                } else {
-                    return (
-                        <td className="placeholder" key={r + "_" + c}>
-                            <div style={placeholderStyle} />
-                        </td>);
                 }
+                return (
+                    <td className="placeholder" key={r + "_" + c}>
+                        <div style={placeholderStyle} />
+                    </td>
+                );
             });
             return (
                 <tr key={r}>
@@ -105,18 +178,154 @@ class PlateGrid extends React.Component {
                 </tr>
             );
         });
-
         return (
+            <table key={plateData.plateId}>
+                <tbody>
+                    <tr><th colSpan={columnNames.length + 1}>
+                        <h2>{plateData.plateName}</h2>
+                    </th></tr>
+                    <tr>
+                        <th> </th>
+                        {columnNames}
+                    </tr>
+                    {rows}
+                </tbody>
+            </table>
+        );
+    }
+
+    handleGsvlScreenPlotChange(event, mode) {
+        if (this.screen_display === undefined) return;
+        gsvlScreenPlotEvents[mode](this.screen_display, event.target.value);
+    }
+
+    renderHeader() {
+        /**
+        {% for table in tables %}
+            <option value={{ table.id }} name="{{ table.name }}"> {{ table.name }} </option>
+        {% endfor %}
+        */
+        const featureList = this.props.tableData;
+        const features = Object.keys(featureList);
+        let options = [];
+        options.push(
+            <option key='-1tableFeatures' value="None" name="None">
+                None
+            </option>
+        );
+        for (let i = 0; i < features.length; i++) {
+            options.push(
+                <option key={i+'tableFeatures'} value={features[i]} name={features[i]}>
+                    {features[i]}
+                </option>
+            );
+        }
+        return (
+            <div className="omeroTablesHeader">
+            <table className="heatmapheader">
+                <thead>
+                    <tr>
+                    <th className="heatmapheader">View Mode:
+                        <select id="gsvl_viewing_mode"
+                                onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeDisplayMode")} }>
+                            <option value="Plate">Plate</option>
+                            <option value="Image">Image</option>
+                        </select>
+                    </th>
+
+                    <th className="heatmapheader">
+                        Table:
+                        <select id="heatmap_tableSelect" 
+                                onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "loadStatistics") } }>
+                            <option value="Need more data" name="Bulk annotation"> "Bulk annotation table" </option>
+                        </select>
+                    </th>
+                    <th className="heatmapheader">
+                        Color by:
+                        <select id="gsvl_color_property"
+                                onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeColorProperty")} }>
+                            { options }
+                        </select>
+                    </th>
+                    <th>
+                        <div id="color_scale"></div>
+                    </th>
+                    <th className="heatmapheader">
+                        Sort by:
+                        <select id="gsvl_sort_property"
+                                onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeSortProperty")} }>
+                            { options }
+                        </select>
+                    </th>
+
+                    </tr>
+                </thead>
+            </table>
+            <table className="heatmapheader">
+                <thead>
+                    <tr>
+                        <th className="heatmapheader"> Grid Settings:</th>
+                        <th className="heatmapheader">
+                        Size:
+                        <input id="input_grid_size"
+                               type='number'
+                               onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeTileSize")} }
+                               style={{width: '35px'}}></input>
+                    </th>
+                    <th className="heatmapheader">
+                        Margin:
+                        <input id="input_margin_size"
+                               type='number'
+                               onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeMarginSize")} }
+                               style={{width: '35px'}}/>
+                    </th>
+                    <th className="heatmapheader">
+                        Offset: 
+                        <input id="input_offset_size"
+                               type='number'
+                               onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeOffsetSize")} }
+                               style={{width: '35px'}}/>
+                    </th>
+                    <th className="heatmapheader">
+                    Aspect ratio:
+                    <input id="input_aspect_ratio"
+                           type='number'
+                           onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeAspectRatio")} }
+                           style={{width: '35px'}}/>
+                    </th>
+                    <th className="heatmapheader">
+                        <input id="input_thumnnails"
+                                type='checkbox'
+                                onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeThumbnailsRendering")} }/>
+                        Thumbnails?
+                    </th>
+                    <th>
+                    </th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    )}
+
+    render() {
+        /**
+            const plateGrids = this.props.plateData.map(
+                v => this.renderPlateGrid(v)
+            );
+            console.log("render plateGrids", plateGrids);
             <div className="plateGrid" ref="plateGrid">
-                <table>
-                    <tbody>
-                        <tr>
-                            <th> </th>
-                            {columnNames}
-                        </tr>
-                        {rows}
-                    </tbody>
-                </table>
+                {plateGrids}
+            </div>
+        */
+        // if (this.screen_display != null) this.gsvlScreenUpdate();
+        console.log("PlateGrid-render");
+        this.gsvlScreenUpdate();
+        const gsvlScreenPlotHeader = this.renderHeader();
+        return (
+            <div>
+                { gsvlScreenPlotHeader }
+                <div id="gsvlScreenPlot">
+                </div>
             </div>
         );
     }
