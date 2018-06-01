@@ -396,3 +396,13 @@ div.tooltip {
     background-color: #cfd8dc;
     color: #fff;
 }
+
+.cell {
+    stroke: #555;
+    stroke-width: 0.2;
+}
+
+.cell:hover {
+    stroke: #0F0;
+    stroke-width: 1;
+}

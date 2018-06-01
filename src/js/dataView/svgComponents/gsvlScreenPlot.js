@@ -2,10 +2,10 @@ import _ from 'lodash';
 
 function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
 {    // No mixed size support at this point!!!!!!!!!!!
-    var _screen = {}
+    var _screen = {};
 
-    var _tile_data = data,
-        _flat_data,
+    var _tile_data = data.filter(Boolean), // (PlateGrids) Get rid of empty elements; make a copy
+        _flat_data,                        // Flat PlateGrids - image visualisation
         _id = id,
         _x_labels = x_labels,
         _y_labels = y_labels,
@@ -15,13 +15,15 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
         _mode = "Plate",
         _sort_property = null,
         _color_property = null,
+        _selected_wells = [],
         _min = null,
         _max = null,
         _global_min = null,
         _global_max = null;
 
-    var _current_parade_keys = [];
-    var _duration = 500;
+    var _current_parade_keys = []; // Parade "Add data" keys
+
+    var _duration = 0;
     var div = d3.select("body").append("div")
                 .attr("class", "tooltip")
                 .style("opacity", 0);
@@ -55,6 +57,22 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
     var _counter = 0;
     d3.select(_id).append("svg");
 
+    _screen._selected_wells = function(selected_wells) {
+      console.log("Adding selection", selected_wells);
+      for (let p = 0; p < _tile_data.length; p++) {
+        for (let r = 0; r < _tile_data[p].length; r++) {
+          for (let c in _tile_data[p][r]) {
+            if (selected_wells.includes(_tile_data[p][r][c].wellId)) {
+              console.log("It's true")
+              _tile_data[p][r][c]["selected"] = true;
+            } else {
+              _tile_data[p][r][c]["selected"] = false;
+            }
+          }
+        }
+      }
+      this.render();
+    }
     _screen._color_property = function(property) {
       if(!arguments.length) return _color_property;
       _color_property = property;
@@ -160,13 +178,14 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
 
     _screen._render_plates = function() {
       console.log("Render plates");
+      console.log("Selected wells", _selected_wells);
       var rect = d3.select(_id).node().getBoundingClientRect();
       var plate_columns = Math.floor(rect.width / _width);
       if (plate_columns < 1) plate_columns = 1;
       var plate_rows = Math.ceil(_tile_data.length / plate_columns)
 
       d3.select(_id)
-          .transition().duration(_duration)
+          //.transition().duration(_duration)
           .attr("height", plate_rows * _height)
           .attr("width", function() {
               if (plate_columns == 1) return plate_columns * _width;
@@ -177,9 +196,9 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
       var chart = d3.select(_id);
       chart.select(_id + ">svg")
           .attr("class", "screen_canvas")
-          .transition().duration(_duration)
-              .attr("width", plate_columns * _width)
-              .attr("height", plate_rows * _height);
+          //.transition().duration(_duration)
+          .attr("width", plate_columns * _width)
+          .attr("height", plate_rows * _height);
 
       var data;
       if ((_sort_property == null && _color_property == null)
@@ -213,12 +232,12 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
             })
             .attr("width", _width)
             .attr("height", _height)
-            .transition().duration(_duration)
-              .attr("transform", function(d, i) {
-                var row = Math.floor(i / plate_columns);
-                var col = i % plate_columns;
-                return "translate(" + col * _width + "," + row * _height + ")";
-              });
+            //.transition().duration(_duration)
+            .attr("transform", function(d, i) {
+              var row = Math.floor(i / plate_columns);
+              var col = i % plate_columns;
+              return "translate(" + col * _width + "," + row * _height + ")";
+            });
 
       var plates = canvas.selectAll(".plate")
       plates.selectAll(".row")
@@ -241,49 +260,39 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
             .exit().remove();
       rows.selectAll(".cell")
           .attr("id", function(d) {if (d == null) return null; return d.id;})
-          .attr(
-            "index", function(d, i, j) {
-              var plate_index = parseInt(d3.select(this.parentNode.parentNode).node().attributes.index.value);
-              return i + (j - plate_index * _num_rows) * _num_columns + plate_index * _num_images;
+          .attr("index", function(d, i, j) {
+            var plate_index = parseInt(d3.select(this.parentNode.parentNode).node().attributes.index.value);
+            return i + (j - plate_index * _num_rows) * _num_columns + plate_index * _num_images;
           })
           .attr("width", _size_x)
           .attr("height", _size_y)
-          .attr(
-            "index", function(d, i, j) {
-              var plate_index = parseInt(d3.select(this.parentNode.parentNode).node().attributes.index.value);
-              return i + (j - plate_index * _num_rows) * _num_columns + plate_index * _num_images;
+          .attr("index", function(d, i, j) {
+            var plate_index = parseInt(d3.select(this.parentNode.parentNode).node().attributes.index.value);
+            return i + (j - plate_index * _num_rows) * _num_columns + plate_index * _num_images;
           })
           .attr("x", function(d, i, j) {return _offset + i * (_size_x + _margin_x);})
-          .attr(
-            "y", function(d, i, j) {
-              var offset_y = parseInt(d3.select(this.parentNode.parentNode).node().attributes.index.value);
-              return _offset + (j - offset_y * _num_rows) * (_size_y + _margin_y);
+          .attr("y", function(d, i, j) {
+            var offset_y = parseInt(d3.select(this.parentNode.parentNode).node().attributes.index.value);
+            return _offset + (j - offset_y * _num_rows) * (_size_y + _margin_y);
           })
-          .attr(
-            "fill", function(d) {
+          .attr("fill", function(d) {
               if (d == null) return "transparent";
               return _square_fill_color;
           })
-          .attr("stroke", '#555')
-          .attr("stroke-width", '0.2')
           .on('mouseover', function(d) {
               if (d == null) return;
               d3.select(this)
-                .style('stroke', '#0F0')
-                .style('stroke-width', '1');
               var message = ""
               for (var attr in d) message += "<b>" + attr + ":</b> " + d[attr] + "<br>";
               div.transition()
-                  .duration(1000)
-                  .style("opacity", .9);
-                div.html(message)
-                  .style("left", (d3.event.x) + "px")
-                  .style("top", (d3.event.y - 28) + "px");
+                 .duration(500)
+                 .style("opacity", .9);
+              div.html(message)
+                 .style("left", (d3.event.x) + "px")
+                 .style("top", (d3.event.y - 28) + "px");
           })
           .on('mouseout', function() {
               d3.select(this)
-                .style('stroke', '#555')
-                .style('stroke-width', '0.2');
               div.transition()
                   .duration(500)
                   .style("opacity", 0);
@@ -305,18 +314,18 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
       d3.select(_id)
           .attr("style", "text-align:center")
           .attr("height", image_rows * (_size_y + _margin_y))
-          .transition().duration(_duration)
-              .attr("width", function() {
-                  if (image_columns == 1) return _margin_x + image_columns * (_size_x + _margin_x);
-                  return rect.width
-              });
+          //.transition().duration(_duration)
+          .attr("width", function() {
+            if (image_columns == 1) return _margin_x + image_columns * (_size_x + _margin_x);
+            return rect.width
+          });
 
       var chart = d3.select(_id);
       chart.select(_id + ">svg")
           .attr("class", "screen_canvas")
           .attr("height", _margin_y + image_rows * (_size_y + _margin_y))
-          .transition().duration(_duration)
-              .attr("width", _margin_x + image_columns * (_size_x + _margin_x));
+          //.transition().duration(_duration)
+          .attr("width", _margin_x + image_columns * (_size_x + _margin_x));
 
       var canvas = chart.select(_id + ">svg")
       canvas.selectAll(".plate").remove();
@@ -441,7 +450,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
 
     _screen._tile_data = function(data) {
         if(!arguments.length) return _tile_data;
-        _tile_data = data;
+        _tile_data = data.filter(Boolean);
         return _screen;
     }
 
@@ -511,7 +520,6 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
               */
         }
     }
-
     _screen.set_color_scale = function(min, max, render) {
       console.log("Set color scale", min, max, render);
       var data;
@@ -638,7 +646,6 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
       this.render();
       return _screen;
     }
-
     _screen.change_margin_size = function(size) {
         if(!arguments.length) return [_margin_x, _margin_y];
         if (size === undefined) return;

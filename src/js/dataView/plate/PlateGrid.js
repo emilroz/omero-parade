@@ -30,16 +30,27 @@ class PlateGrid extends React.Component {
         let screen_display = null;
     }
 
-    componentDidUpdate() {
+    gsvlScreenUpdate() {
         const plateData = this.props.plateData;
-        const plateGrids = plateData.map(
+        let plateGrids = plateData.map(
             v => v.grid
         );
+        const filteredPlateGrids = plateGrids.filter(Boolean);
+        console.log(filteredPlateGrids.length, plateGrids.length)
+        if (filteredPlateGrids.length !== plateGrids.length) {
+            console.log("Looks like Plates are still loading");
+            return;
+        }
         const featureList = this.props.tableData;
         const features = Object.keys(featureList);
-        if (this.screen_display == null && plateGrids.length > 0)  {
+        const selected = this.props.selectedWellIds;
+        if (this.screen_display == null && filteredPlateGrids.length > 0)  {
+            console.log("Plate grids:", filteredPlateGrids);
+            for (let i = 0; i < filteredPlateGrids.length; i++) {
+                console.log(i, filteredPlateGrids[i]);
+            }
             this.screen_display = gsvlScreenPlot(
-                "#gsvlScreenPlot", plateGrids, "x", "y",
+                "#gsvlScreenPlot", filteredPlateGrids, "x", "y",
                 this.props.handleImageWellClicked);
             
             this.screen_display.set_color_scale_div("#color_scale");
@@ -47,14 +58,17 @@ class PlateGrid extends React.Component {
             d3.select("#input_margin_size").attr("value", this.screen_display.change_margin_size()[0]);
             d3.select("#input_offset_size").attr("value", this.screen_display.change_offset_size());
             d3.select("#input_aspect_ratio").attr("value", this.screen_display.change_aspect_ratio());
-
+            this.screen_display._selected_wells(selected);
             if (features.length > 0) {
                 this.screen_display.change_parade_analytics(featureList);
             } else {
                 this.screen_display.render();
             }
-        } else if (plateGrids.length > 0) {
-            this.screen_display._tile_data(plateGrids);
+        } else if (filteredPlateGrids.length > 0) {
+            this.screen_display._selected_wells([]);
+            this.screen_display.render();
+            this.screen_display._tile_data(filteredPlateGrids);
+            this.screen_display._selected_wells(selected);
             if (features.length > 0) {
                 this.screen_display.change_parade_analytics(featureList);
             } else {
@@ -63,16 +77,24 @@ class PlateGrid extends React.Component {
         }
     }
 
+    componentDidUpdate() {
+        console.log("PlateGrid-didUpdate");
+        this.gsvlScreenUpdate();
+    }
+
     componentDidMount() {
+        console.log("PlateGrid-didMount");
+        const selected = this.props.selectedWellIds;
         const plateData = this.props.plateData;
         const plateGrids = plateData.map(
             v => v.grid
         );
-        if (plateGrids.length > 0) {
+        if (this.screen_display == null && plateGrids.length > 0) {
+            console.log("Creating new screen display");
             this.screen_display = gsvlScreenPlot(
                 "#gsvlScreenPlot", plateGrids, "x", "y",
                 this.props.handleImageWellClicked);
-            this.screen_display.render();
+            this.screen_display._selected_wells(selected).render();
         }
         $(this.refs.plateGrid).selectable({
             filter: 'td.well',
@@ -103,6 +125,7 @@ class PlateGrid extends React.Component {
 
     componentWillUnmount() {
         // cleanup plugin
+        console.log("PlateGrid-willUnmount");
         $(this.refs.dataIcons).selectable( "destroy" );
     }
 
@@ -294,6 +317,9 @@ class PlateGrid extends React.Component {
                 {plateGrids}
             </div>
         */
+        // if (this.screen_display != null) this.gsvlScreenUpdate();
+        console.log("PlateGrid-render");
+        this.gsvlScreenUpdate();
         const gsvlScreenPlotHeader = this.renderHeader();
         return (
             <div>
