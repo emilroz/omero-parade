@@ -58,21 +58,11 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
     d3.select(_id).append("svg");
 
     _screen._selected_wells = function(selected_wells) {
-      console.log("Adding selection", selected_wells);
-      for (let p = 0; p < _tile_data.length; p++) {
-        for (let r = 0; r < _tile_data[p].length; r++) {
-          for (let c in _tile_data[p][r]) {
-            if (selected_wells.includes(_tile_data[p][r][c].wellId)) {
-              console.log("It's true")
-              _tile_data[p][r][c]["selected"] = true;
-            } else {
-              _tile_data[p][r][c]["selected"] = false;
-            }
-          }
-        }
-      }
-      this.render();
+      if(!arguments.length) return _selected_wells;
+      _selected_wells = selected_wells.filter(Boolean);
+      return _screen;
     }
+
     _screen._color_property = function(property) {
       if(!arguments.length) return _color_property;
       _color_property = property;
@@ -178,7 +168,6 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
 
     _screen._render_plates = function() {
       console.log("Render plates");
-      console.log("Selected wells", _selected_wells);
       var rect = d3.select(_id).node().getBoundingClientRect();
       var plate_columns = Math.floor(rect.width / _width);
       if (plate_columns < 1) plate_columns = 1;
@@ -259,6 +248,14 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
           .data(function (d) {return d;})
             .exit().remove();
       rows.selectAll(".cell")
+          .attr("class", function(d) {
+            if (d == null) return "cell";
+            if (_selected_wells.includes(d.wellId)) {
+              return "cell selected";
+            } else {
+              return "cell";
+            }
+          })
           .attr("id", function(d) {if (d == null) return null; return d.id;})
           .attr("index", function(d, i, j) {
             var plate_index = parseInt(d3.select(this.parentNode.parentNode).node().attributes.index.value);
