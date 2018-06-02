@@ -406,3 +406,8 @@ div.tooltip {
     stroke: #0F0;
     stroke-width: 1;
 }
+
+.cell.selected {
+    stroke: #0F0;
+    stroke-width: 1;
+}
