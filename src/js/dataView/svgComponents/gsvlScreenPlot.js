@@ -1,4 +1,8 @@
+import * as d3 from "d3";
 import _ from 'lodash';
+
+
+console.log('d3', d3);
 
 function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
 {    // No mixed size support at this point!!!!!!!!!!!
@@ -47,7 +51,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
 
     _screen.image_clicked = image_clicked;
 
-    var color = d3.scale.quantize()
+    var color = d3.scaleQuantize()
         .domain([0, 100])
         .range([
             "#3182bd", "#6baed6", "#9ecae1", "#c6dbef",
@@ -210,12 +214,12 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
       canvas.selectAll(".plate")
             .data(data)
             .enter().append("svg:g")
-              .attr("class", "plate");
+              .attr("class", "plate")
       canvas.selectAll(".plate")
             .data(data)
                 .exit().remove();
       canvas.selectAll(".plate")
-            .attr("id", function(d, i) {return "plateSvg_"+i;})
+            .attr("id", function(d, i) {return "plateSvg_" + i;})
             .attr("index", function(d, i) {
               return i;
             })
@@ -257,19 +261,25 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
             }
           })
           .attr("id", function(d) {if (d == null) return null; return d.id;})
-          .attr("index", function(d, i, j) {
-            var plate_index = parseInt(d3.select(this.parentNode.parentNode).node().attributes.index.value);
+          .attr("index", function(d, i) {
+            const j = parseInt(this.parentNode.attributes.index.value);
+            var plate_index = parseInt(this.parentNode.parentNode.attributes.index.value);
             return i + (j - plate_index * _num_rows) * _num_columns + plate_index * _num_images;
           })
           .attr("width", _size_x)
           .attr("height", _size_y)
-          .attr("index", function(d, i, j) {
-            var plate_index = parseInt(d3.select(this.parentNode.parentNode).node().attributes.index.value);
+          .attr("index", function(d, i) {
+            const j = parseInt(this.parentNode.attributes.index.value);
+            var plate_index = parseInt(this.parentNode.parentNode.attributes.index.value);
             return i + (j - plate_index * _num_rows) * _num_columns + plate_index * _num_images;
           })
-          .attr("x", function(d, i, j) {return _offset + i * (_size_x + _margin_x);})
-          .attr("y", function(d, i, j) {
-            var offset_y = parseInt(d3.select(this.parentNode.parentNode).node().attributes.index.value);
+          .attr("x", function(d, i) {
+            const j = parseInt(this.parentNode.attributes.index.value);
+            return _offset + i * (_size_x + _margin_x);
+          })
+          .attr("y", function(d, i) {
+            const j = parseInt(this.parentNode.attributes.index.value);
+            var offset_y = parseInt(this.parentNode.parentNode.attributes.index.value);
             return _offset + (j - offset_y * _num_rows) * (_size_y + _margin_y);
           })
           .attr("fill", function(d) {
@@ -554,9 +564,9 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
         _min = min;
       }
       console.log([_global_min, _global_max],[_min, _max]);
-      color = d3.scale.linear()
-                      .domain([_min, _min + 0.5 * (_max - _min), _max])
-                      .range(["#5f013e", "#dd65af", "white"]);
+      color = d3.scaleLinear()
+                .domain([_min, _min + 0.5 * (_max - _min), _max])
+                .range(["#5f013e", "#dd65af", "white"]);
       if (render) this.render();
     }
 

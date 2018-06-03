@@ -18,6 +18,10 @@
 
 import React, { Component } from 'react';
 
+import * as d3 from "d3";
+
+console.log('d3', d3);
+
 import Well from './Well';
 import gsvlScreenPlot from '../svgComponents/gsvlScreenPlot'
 import gsvlScreenPlotEvents from '../svgComponents/gsvlScreenPlotEvents'
