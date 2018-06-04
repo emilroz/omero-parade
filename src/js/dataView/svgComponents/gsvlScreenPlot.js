@@ -153,17 +153,19 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
           })
           .attr("width", _size_x)
           .attr("height", _size_y)
-          .attr("index", function(d, i, j) {
-            var plate_index = parseInt(d3.select(this.parentNode.parentNode).node().attributes.index.value);
-            return i + (j - plate_index * _num_rows) * _num_columns + plate_index * _num_images;
+          .attr("index", function(d, i) {
+            const j = parseInt(this.parentNode.attributes.index.value);
+            return i + j * _num_columns;
           })
-          .attr("x", function(d, i, j) {return _offset + i * (_size_x + _margin_x);})
-          .attr("y", function(d, i, j) {
-            var offset_y = parseInt(d3.select(this.parentNode.parentNode).node().attributes.index.value);
-            return _offset + (j - offset_y * _num_rows) * (_size_y + _margin_y);
+          .attr("x", function(d, i) {
+            return _offset + i * (_size_x + _margin_x);
+          })
+          .attr("y", function(d, i) {
+            const j = parseInt(this.parentNode.attributes.index.value);
+            return _offset + j * (_size_y + _margin_y);
           })
           .filter(function (d, i) {
-            console.log(d["What happens here:", _color_property], _min, _max);
+            //console.log(d["What happens here:", _color_property], _min, _max);
             return (d[_color_property] < _min || d[_color_property] > _max);
           })
           .attr("fill", _square_fill_color)
@@ -173,6 +175,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
     _screen._render_plates = function() {
       console.log("Render plates");
       var rect = d3.select(_id).node().getBoundingClientRect();
+
       var plate_columns = Math.floor(rect.width / _width);
       if (plate_columns < 1) plate_columns = 1;
       var plate_rows = Math.ceil(_tile_data.length / plate_columns)
@@ -219,10 +222,8 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
             .data(data)
               .exit().remove();
       canvas.selectAll(".plate")
-            .attr("id", function(d, i) {return "plateSvg_" + i;})
-            .attr("index", function(d, i) {
-              return i;
-            })
+            .attr("id", function(d, i) { return "plateSvg_" + i; })
+            .attr("index", function(d, i) { return i; })
             .attr("width", _width)
             .attr("height", _height)
             //.transition().duration(_duration)
@@ -346,12 +347,12 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
       }
 
       canvas.selectAll(".images")
-              .data(data)
-          .enter().append("svg:rect")
+            .data(data)
+            .enter().append("svg:rect")
               .attr("class", "images");
       canvas.selectAll(".images")
-              .data(data)
-          .exit().remove();
+            .data(data)
+            .exit().remove();
       canvas.selectAll(".images")
           .filter(function (d, i) {
               return (d[_color_property] < _min || d[_color_property] > _max)
@@ -364,7 +365,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
           }).remove();
       }
 
-      var filtered_no_images = canvas.selectAll(".images")[0].length;
+      var filtered_no_images = canvas.selectAll(".images")._groups[0].length;
       if (filtered_no_images != _number_of_plates * _num_images) {
           var filtered_image_rows = Math.ceil(filtered_no_images / image_columns);
           console.log("new height", filtered_image_rows, filtered_image_rows * (_size_y + _margin_y));

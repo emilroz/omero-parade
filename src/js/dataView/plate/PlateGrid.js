@@ -308,6 +308,7 @@ class PlateGrid extends React.Component {
         */
         // if (this.screen_display != null) this.gsvlScreenUpdate();
         const gsvlScreenPlotHeader = this.renderHeader();
+        console.log(this.props.thumbnails);
         return (
             <div>
                 { gsvlScreenPlotHeader }
