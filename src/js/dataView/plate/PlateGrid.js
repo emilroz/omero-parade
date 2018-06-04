@@ -56,7 +56,7 @@ class PlateGrid extends React.Component {
         if (this.screen_display == null && filteredPlateGrids.length > 0)  {
             this.screen_display = gsvlScreenPlot(
                 "#gsvlScreenPlot", filteredPlateGrids, "x", "y",
-                this.props.handleImageWellClicked);
+                this.props.handleImageWellClicked, this.props.thumbnails);
             this.screen_display.set_color_scale_div("#color_scale");
             this.screen_display._selected_wells(selected);
             this.updateGsvlScreenControls();
@@ -66,6 +66,8 @@ class PlateGrid extends React.Component {
                 this.screen_display.render();
             }
         } else if (filteredPlateGrids.length > 0) {
+            this.screen_display._thumbnail_array = this.props.thumbnails; // Nasty at best!!!
+            console.log(this.props.thumbnails);
             this.screen_display._tile_data(filteredPlateGrids);
             this.screen_display._selected_wells(selected);
             this.updateGsvlScreenControls();
@@ -308,7 +310,6 @@ class PlateGrid extends React.Component {
         */
         // if (this.screen_display != null) this.gsvlScreenUpdate();
         const gsvlScreenPlotHeader = this.renderHeader();
-        console.log(this.props.thumbnails);
         return (
             <div>
                 { gsvlScreenPlotHeader }

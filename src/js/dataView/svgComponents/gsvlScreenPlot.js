@@ -4,7 +4,7 @@ import _ from 'lodash';
 
 console.log('d3', d3);
 
-function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
+function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
 {    // No mixed size support at this point!!!!!!!!!!!
     var _screen = {};
 
@@ -13,6 +13,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
         _id = id,
         _x_labels = x_labels,
         _y_labels = y_labels,
+        _thumbnail_array = thumbnails,
         _statistics = [],
         _flat_statistics = [],
         _property,
@@ -119,6 +120,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
 
     _screen._render_plate_thumbnails = function() {
       console.log("Render plates thumbnails");
+      console.log("Thumbnail array", _thumbnail_array);
       var rect = d3.select(_id).node().getBoundingClientRect();
       var plate_columns = Math.floor(rect.width / _width);
       if (plate_columns < 1) plate_columns = 1;
@@ -146,10 +148,17 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
           .data(function (d) {return d;})
             .exit().remove();
       rows.selectAll(".image")
+        /*
           .attr("xlink:href", function(d) {
             var size = '/' + (_size_x - 2 * _thumbnail_offset) + '/';
             if (d != null) return d.thumb_url.replace('/64/', size);
             return "";
+          })
+        */
+          .attr("xlink:href", function(d) {
+            if (d == null) return "";
+            console.log(_thumbnail_array[d.wellId]);
+            return _thumbnail_array[d.wellId];
           })
           .attr("width", _size_x)
           .attr("height", _size_y)
