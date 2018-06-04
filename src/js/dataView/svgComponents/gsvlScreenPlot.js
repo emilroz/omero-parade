@@ -217,7 +217,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
               .attr("class", "plate")
       canvas.selectAll(".plate")
             .data(data)
-                .exit().remove();
+              .exit().remove();
       canvas.selectAll(".plate")
             .attr("id", function(d, i) {return "plateSvg_" + i;})
             .attr("index", function(d, i) {
@@ -263,15 +263,13 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
           .attr("id", function(d) {if (d == null) return null; return d.id;})
           .attr("index", function(d, i) {
             const j = parseInt(this.parentNode.attributes.index.value);
-            var plate_index = parseInt(this.parentNode.parentNode.attributes.index.value);
-            return i + (j - plate_index * _num_rows) * _num_columns + plate_index * _num_images;
+            return i + j * _num_columns;
           })
           .attr("width", _size_x)
           .attr("height", _size_y)
           .attr("index", function(d, i) {
             const j = parseInt(this.parentNode.attributes.index.value);
-            var plate_index = parseInt(this.parentNode.parentNode.attributes.index.value);
-            return i + (j - plate_index * _num_rows) * _num_columns + plate_index * _num_images;
+            return i + j * _num_columns;
           })
           .attr("x", function(d, i) {
             const j = parseInt(this.parentNode.attributes.index.value);
@@ -279,8 +277,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked)
           })
           .attr("y", function(d, i) {
             const j = parseInt(this.parentNode.attributes.index.value);
-            var offset_y = parseInt(this.parentNode.parentNode.attributes.index.value);
-            return _offset + (j - offset_y * _num_rows) * (_size_y + _margin_y);
+            return _offset + j * (_size_y + _margin_y);
           })
           .attr("fill", function(d) {
               if (d == null) return "transparent";
