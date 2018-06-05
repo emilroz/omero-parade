@@ -53,27 +53,30 @@ class PlateGrid extends React.Component {
         const featureList = this.props.tableData;
         const features = Object.keys(featureList);
         const selected = this.props.selectedWellIds;
+        const filteredIds = this.props.filteredImages.map(i => i.id);
         if (this.screen_display == null && filteredPlateGrids.length > 0)  {
             this.screen_display = gsvlScreenPlot(
                 "#gsvlScreenPlot", filteredPlateGrids, "x", "y",
                 this.props.handleImageWellClicked, this.props.thumbnails);
             this.screen_display.set_color_scale_div("#color_scale");
             this.screen_display._selected_wells(selected);
+            this.screen_display._visible_wells(filteredIds);
             this.updateGsvlScreenControls();
             if (features.length > 0) {
-                this.screen_display.change_parade_analytics(featureList);
+                this.screen_display.change_parade_analytics(featureList, true);
             } else {
-                this.screen_display.render();
+                this.screen_display.render(true);
             }
         } else if (filteredPlateGrids.length > 0) {
             this.screen_display._thumbnail_array(this.props.thumbnails); // Nasty at best!!!
             this.screen_display._tile_data(filteredPlateGrids);
             this.screen_display._selected_wells(selected);
+            this.screen_display._visible_wells(filteredIds);
             this.updateGsvlScreenControls();
             if (features.length > 0) {
-                this.screen_display.change_parade_analytics(featureList);
+                this.screen_display.change_parade_analytics(featureList, true);
             } else {
-                this.screen_display.render();
+                this.screen_display.render(true);
             }
         }
     }

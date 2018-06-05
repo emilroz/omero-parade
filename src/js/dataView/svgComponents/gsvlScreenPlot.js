@@ -22,6 +22,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
         _color_property = null,
         _text_property = null,
         _selected_wells = [],
+        _visible_wells = [],
         _min = null,
         _max = null,
         _global_min = null,
@@ -69,6 +70,12 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
       return _screen;
     }
 
+    _screen._visible_wells = function(visible_wells) {
+      if(!arguments.length) return _visible_wells;
+      _visible_wells = visible_wells.filter(Boolean);
+      return _screen;
+    }
+
     _screen._thumbnail_array = function(thumbnails) {
       if(!arguments.length) return _thumbnail_array;
       _thumbnail_array = Object.assign({}, thumbnails);
@@ -102,7 +109,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
       return flat_array;
     }
 
-    _screen.render = function() {
+    _screen.render = function(update_color_scale) {
       console.log("Render");
       _flat_data = this.flatten_3Darray(_tile_data);
       if (_mode == "Plate") {
@@ -120,7 +127,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
       }
 
       if (_color_property != null) {
-        this.scale_colors();
+        this.scale_colors(update_color_scale);
       }
       else {
         d3.select(_color_scale_div).text("");
@@ -170,7 +177,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
           })
         */
           .attr("xlink:href", function(d) {
-            if (d == null) return "";
+            if (d == null || !_visible_wells.includes(d.id)) return "";
             return _thumbnail_array[d.id];
           })
           .attr("width", _size_x)
@@ -215,9 +222,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
 
       var rows = plates.selectAll(".text_row");
       rows.selectAll(".textSvg")
-          .data(function (d) {
-            console.log('0', d);
-            return d; })
+          .data(function (d) {return d; })
           .enter().append("svg")
             .attr("class", "textSvg");
       rows.selectAll(".text")
@@ -253,7 +258,6 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
       const textValues = rows.selectAll(".textSvg");
       textValues.selectAll(".textValues")
                 .data(function (d) {
-                  console.log('1', d);
                   return [d];
                 })
                 .enter().append("text")
@@ -263,7 +267,6 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
                 .exit().remove();
       textValues.selectAll(".textValues")
                 .attr("index", function(d, i) {
-                  console.log('2', d, i);
                   const j = parseInt(this.parentNode.attributes.index.value);
                   return i + j * _num_columns;
                 })
@@ -272,8 +275,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
                 .attr("x", "50%")
                 .attr("y", "50%")
                 .text( function (d) {
-                  console.log('1', d);
-                  if (d == null) return;
+                  if (d == null || !_visible_wells.includes(d.id)) return;
                   return d[_text_property];
                 })
     }
@@ -360,7 +362,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
             .exit().remove();
       rows.selectAll(".cell")
           .attr("class", function(d) {
-            if (d == null) return "cell";
+            if (d == null || !_visible_wells.includes(d.id)) return "cell";
             if (_selected_wells.includes(d.wellId)) {
               return "cell selected";
             } else {
@@ -387,7 +389,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
             return _offset + j * (_size_y + _margin_y);
           })
           .attr("fill", function(d) {
-              if (d == null) return "transparent";
+              if (d == null || !_visible_wells.includes(d.id)) return "transparent";
               return _square_fill_color;
           })
           .on('mouseover', function(d) {
@@ -576,9 +578,9 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
         this._mode(mode).render();
     }
 
-    _screen.scale_colors = function() {
+    _screen.scale_colors = function(update_color_scale) {
         console.log("Scale colors");
-        if (_min == null || _max == null) {
+        if (update_color_scale || _global_min == null || _global_max == null) {
             this.set_color_scale();
         }
         if (_color_scale_div != null) this._render_color_scale_div();
@@ -587,7 +589,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
         if (_mode == "Image") {
           canvas.selectAll(".images")
             .attr("fill",  function(d) {
-              if (d == null) {
+              if (d == null || !_visible_wells.includes(d.id)) {
                 //return 'transparent';
                 return 'green';
               } else {
@@ -605,9 +607,8 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
             var rows = plates.selectAll(".row");
             rows.selectAll(".cell")
                 .attr("fill",  function(d) {
-                    if (d == null) {
-                      return 'green';
-                      // return 'transparent';
+                    if (d == null || !_visible_wells.includes(d.id)) {
+                      return 'transparent';
                     } else {
                         if (color(d[_color_property]) == "#NaNNaNNaN") {
                           return 'red';
@@ -630,6 +631,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
                     .attr("fill", _square_fill_color);
               */
         }
+        if (_color_scale_div != null) this._render_color_scale_div();
     }
     _screen.set_color_scale = function(min, max, render) {
       console.log("Set color scale", min, max, render);
@@ -643,7 +645,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
         _global_max = d3.max(data, function(data) {
           return d3.max(data, function(array) {
             return d3.max(array, function(d) {
-              if (d == null) {
+              if (d == null || !_visible_wells.includes(d.id)) {
                 return null
               };
               return d[_color_property];
@@ -653,7 +655,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
         _global_min = d3.min(data, function(data) {
           return d3.min(data, function(array) {
             return d3.min(array, function(d) {
-              if (d == null) {
+              if (d == null || !_visible_wells.includes(d.id)) {
                 return null
               };
               return d[_color_property];
@@ -667,7 +669,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
         _max = max;
         _min = min;
       }
-      console.log([_global_min, _global_max],[_min, _max]);
+      console.log([_global_min, _global_max], [_min, _max]);
       color = d3.scaleLinear()
                 .domain([_min, _min + 0.5 * (_max - _min), _max])
                 .range(["#5f013e", "#dd65af", "white"]);
@@ -832,7 +834,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
         this.render();
     }
 
-    _screen.change_parade_analytics = function(analytics) {
+    _screen.change_parade_analytics = function(analytics, update_color_scale) {
       const analytics_keys = Object.keys(analytics);
       for (let i = 0; i < analytics_keys.length; i++) {
         if (!_current_parade_keys.includes(analytics_keys[i])) {
@@ -849,7 +851,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
           }
         }
       }
-      this.render();
+      this.render(update_color_scale);
     }
 
     _screen.render_thumbnails = function(render_thumbnails) {
