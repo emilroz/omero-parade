@@ -20,6 +20,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
         _mode = "Plate",
         _sort_property = null,
         _color_property = null,
+        _text_property = null,
         _selected_wells = [],
         _min = null,
         _max = null,
@@ -86,6 +87,11 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
       return _screen;
     };
 
+    _screen._text_property = function(property) {
+      if(!arguments.length) return _text_property;
+      _text_property = property;
+      return _screen;
+    }
     _screen.flatten_3Darray = function(array) {
       var flat_array = array.reduce(function(a, b) {
         return a.concat(b);
@@ -102,7 +108,9 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
       if (_mode == "Plate") {
         this._render_plates();
         if (_render_thumbnails) this._render_plate_thumbnails();
-        this._render_plates_values();
+        if (_text_property != null) {
+          this._render_plates_values();
+        }
       }
       else if (_mode == "Image") {
         this._render_images();
@@ -207,7 +215,9 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
 
       var rows = plates.selectAll(".text_row");
       rows.selectAll(".textSvg")
-          .data(function (d) { return d; })
+          .data(function (d) {
+            console.log('0', d);
+            return d; })
           .enter().append("svg")
             .attr("class", "textSvg");
       rows.selectAll(".text")
@@ -234,16 +244,38 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
             const j = parseInt(this.parentNode.attributes.index.value);
             return _offset + j * (_size_y + _margin_y);
           })
-          .text( function (d) {
-            if (d == null) return;
-            return d.thumb_url;
-          })
           .filter(function (d, i) {
             //console.log(d["What happens here:", _color_property], _min, _max);
             return (d[_color_property] < _min || d[_color_property] > _max);
           })
-          .attr("fill", _square_fill_color)
-          .append("text");
+          .attr("fill", _square_fill_color);
+
+      const textValues = rows.selectAll(".textSvg");
+      textValues.selectAll(".textValues")
+                .data(function (d) {
+                  console.log('1', d);
+                  return [d];
+                })
+                .enter().append("text")
+                  .attr("class", "textValues");
+      textValues.selectAll(".textValues")
+                .data(function (d) {return [d];})
+                .exit().remove();
+      textValues.selectAll(".textValues")
+                .attr("index", function(d, i) {
+                  console.log('2', d, i);
+                  const j = parseInt(this.parentNode.attributes.index.value);
+                  return i + j * _num_columns;
+                })
+                .attr("text-anchor", "middle")
+                .attr("alignment-baseline", "middle")
+                .attr("x", "50%")
+                .attr("y", "50%")
+                .text( function (d) {
+                  console.log('1', d);
+                  if (d == null) return;
+                  return d[_text_property];
+                })
     }
 
     _screen._render_plates = function() {
@@ -774,15 +806,23 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
     };
 
     _screen.change_sort_property = function(property) {
-        console.log("Change sort property", property);
-        this._sort_property(property);
-        if (_color_property == null || property == null) {
-            this.render();
-        } else {
-            this._sort();
-            this.render();
-        }
+      console.log("Change sort property", property);
+      this._sort_property(property);
+      if (property != null) {
+        this._sort();
         this.render();
+      }
+      this.render();
+    }
+
+    _screen.change_text_property = function(property) {
+      console.log("Change sort property", property);
+      this._text_property(property);
+      if (_sort_property != null) {
+        this._sort();
+        this.render();
+      }
+      this.render();
     }
 
     _screen.change_statistics = function(statistics) {

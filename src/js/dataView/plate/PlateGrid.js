@@ -235,6 +235,12 @@ class PlateGrid extends React.Component {
                             <option value="Need more data" name="Bulk annotation"> "Bulk annotation table" </option>
                         </select>
                     </th>
+                    </tr>
+                </thead>
+            </table>
+            <table className="heatmapheader">
+                <thead>
+                    <tr>
                     <th className="heatmapheader">
                         Color by:
                         <select id="gsvl_color_property"
@@ -244,6 +250,13 @@ class PlateGrid extends React.Component {
                     </th>
                     <th>
                         <div id="color_scale"></div>
+                    </th>
+                    <th className="heatmapheader">
+                        Label by:
+                        <select id="gsvl_text_property"
+                                onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeTextProperty")} }>
+                            { options }
+                        </select>
                     </th>
                     <th className="heatmapheader">
                         Sort by:

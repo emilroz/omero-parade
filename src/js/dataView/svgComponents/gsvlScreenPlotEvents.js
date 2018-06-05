@@ -48,6 +48,15 @@ const gsvlScreenPlotEvents = {
         }
     },
 
+    changeTextProperty: (gsvlScreen, value) => {
+        if (gsvlScreen === undefined) return;
+        if (value == "None") {
+            gsvlScreen.change_text_property(null);
+        } else {
+            gsvlScreen.change_text_property(value);
+        }
+    },
+
     loadStatistics: (gsvlScreen, value) => {
         if (gsvlScreen === undefined) return;
     }
