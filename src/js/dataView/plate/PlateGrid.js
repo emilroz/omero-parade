@@ -66,8 +66,7 @@ class PlateGrid extends React.Component {
                 this.screen_display.render();
             }
         } else if (filteredPlateGrids.length > 0) {
-            this.screen_display._thumbnail_array = this.props.thumbnails; // Nasty at best!!!
-            console.log(this.props.thumbnails);
+            this.screen_display._thumbnail_array(this.props.thumbnails); // Nasty at best!!!
             this.screen_display._tile_data(filteredPlateGrids);
             this.screen_display._selected_wells(selected);
             this.updateGsvlScreenControls();
@@ -187,7 +186,12 @@ class PlateGrid extends React.Component {
 
     handleGsvlScreenPlotChange(event, mode) {
         if (this.screen_display === undefined) return;
-        gsvlScreenPlotEvents[mode](this.screen_display, event.target.value);
+        console.log(event.target.type);
+        if (event.target.type == "checkbox") {
+            gsvlScreenPlotEvents[mode](this.screen_display, event.target.checked);
+        } else {
+            gsvlScreenPlotEvents[mode](this.screen_display, event.target.value);
+        }
     }
 
     renderHeader() {

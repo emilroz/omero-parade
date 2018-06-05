@@ -68,6 +68,12 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
       return _screen;
     }
 
+    _screen._thumbnail_array = function(thumbnails) {
+      if(!arguments.length) return _thumbnail_array;
+      _thumbnail_array = Object.assign({}, thumbnails);
+      return _screen;
+    }
+
     _screen._color_property = function(property) {
       if(!arguments.length) return _color_property;
       _color_property = property;
@@ -120,7 +126,6 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
 
     _screen._render_plate_thumbnails = function() {
       console.log("Render plates thumbnails");
-      console.log("Thumbnail array", _thumbnail_array);
       var rect = d3.select(_id).node().getBoundingClientRect();
       var plate_columns = Math.floor(rect.width / _width);
       if (plate_columns < 1) plate_columns = 1;
@@ -157,8 +162,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
         */
           .attr("xlink:href", function(d) {
             if (d == null) return "";
-            console.log(_thumbnail_array[d.wellId]);
-            return _thumbnail_array[d.wellId];
+            return _thumbnail_array[d.id];
           })
           .attr("width", _size_x)
           .attr("height", _size_y)
