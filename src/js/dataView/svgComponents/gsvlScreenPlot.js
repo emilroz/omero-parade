@@ -102,6 +102,7 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
       if (_mode == "Plate") {
         this._render_plates();
         if (_render_thumbnails) this._render_plate_thumbnails();
+        this._render_plates_values();
       }
       else if (_mode == "Image") {
         this._render_images();
@@ -136,20 +137,20 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
       var plates = canvas.selectAll(".plate");
       plates.selectAll(".image_row")
             .data(function (d,i) {return d;})
-            .enter().append("svg:svg")
+            .enter().append("svg:g")
               .attr("class", "image_row");
-      plates.selectAll(".row")
+      plates.selectAll(".image_row")
             .data(function (d) {return d;})
               .exit().remove();
-      plates.selectAll(".row")
+      plates.selectAll(".image_row")
             .attr("index", function(d, i) {return i;});
 
-      var rows = plates.selectAll(".row");
+      var rows = plates.selectAll(".image_row");
       rows.selectAll(".image")
           .data(function (d) { return d; })
           .enter().append("svg:image")
             .attr("class", "image");
-      rows.selectAll(".cell")
+      rows.selectAll(".image")
           .data(function (d) {return d;})
             .exit().remove();
       rows.selectAll(".image")
@@ -183,6 +184,66 @@ function gsvlScreenPlot(id, data, x_labels, y_labels, image_clicked, thumbnails)
           })
           .attr("fill", _square_fill_color)
           .attr("xlink:href", "");
+    }
+
+    _screen._render_plates_values = function() {
+      var rect = d3.select(_id).node().getBoundingClientRect();
+      var plate_columns = Math.floor(rect.width / _width);
+      if (plate_columns < 1) plate_columns = 1;
+      var plate_rows = Math.ceil(_tile_data.length / plate_columns);
+
+      var chart = d3.select(_id);
+      var canvas = chart.select(_id + ">svg");
+      var plates = canvas.selectAll(".plate");
+      plates.selectAll(".text_row")
+            .data(function (d,i) {return d;})
+            .enter().append("svg:g")
+              .attr("class", "text_row");
+      plates.selectAll(".text_row")
+            .data(function (d) {return d;})
+              .exit().remove();
+      plates.selectAll(".text_row")
+            .attr("index", function(d, i) {return i;});
+
+      var rows = plates.selectAll(".text_row");
+      rows.selectAll(".textSvg")
+          .data(function (d) { return d; })
+          .enter().append("svg")
+            .attr("class", "textSvg");
+      rows.selectAll(".text")
+          .data(function (d) {return d;})
+            .exit().remove();
+      rows.selectAll(".textSvg")
+        /*
+          .attr("xlink:href", function(d) {
+            var size = '/' + (_size_x - 2 * _thumbnail_offset) + '/';
+            if (d != null) return d.thumb_url.replace('/64/', size);
+            return "";
+          })
+        */
+          .attr("width", _size_x)
+          .attr("height", _size_y)
+          .attr("index", function(d, i) {
+            const j = parseInt(this.parentNode.attributes.index.value);
+            return i + j * _num_columns;
+          })
+          .attr("x", function(d, i) {
+            return _offset + i * (_size_x + _margin_x);
+          })
+          .attr("y", function(d, i) {
+            const j = parseInt(this.parentNode.attributes.index.value);
+            return _offset + j * (_size_y + _margin_y);
+          })
+          .text( function (d) {
+            if (d == null) return;
+            return d.thumb_url;
+          })
+          .filter(function (d, i) {
+            //console.log(d["What happens here:", _color_property], _min, _max);
+            return (d[_color_property] < _min || d[_color_property] > _max);
+          })
+          .attr("fill", _square_fill_color)
+          .append("text");
     }
 
     _screen._render_plates = function() {
