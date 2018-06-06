@@ -223,95 +223,93 @@ class PlateGrid extends React.Component {
             <table className="heatmapheader">
                 <thead>
                     <tr>
-                    <th className="heatmapheader">View Mode:
-                        <select id="gsvl_viewing_mode"
-                                onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeDisplayMode")} }>
-                            <option value="Plate">Plate</option>
-                            <option value="Image">Image</option>
-                        </select>
-                    </th>
+                        <th className="heatmapheader right">View Mode:</th>
+                        <th className="heatmapheader left">
+                            <select id="gsvl_viewing_mode"
+                                    onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeDisplayMode")} }>
+                                <option value="Plate">Plate</option>
+                                <option value="Image">Image</option>
+                            </select>
+                        </th>
 
-                    <th className="heatmapheader">
-                        Table:
-                        <select id="heatmap_tableSelect" 
-                                onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "loadStatistics") } }>
-                            <option value="Need more data" name="Bulk annotation"> "Bulk annotation table" </option>
-                        </select>
-                    </th>
+                        <th className="heatmapheader right">Table:</th>
+                        <th className="heatmapheader left">
+                            <select id="heatmap_tableSelect" 
+                                    onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "loadStatistics") } }>
+                                <option value="Need more data" name="Bulk annotation"> "Bulk annotation table" </option>
+                            </select>
+                        </th>
                     </tr>
                 </thead>
             </table>
-            <table className="heatmapheader">
+            <table>
                 <thead>
                     <tr>
-                    <th className="heatmapheader">
-                        Color by:
-                        <select id="gsvl_color_property"
-                                onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeColorProperty")} }>
-                            { options }
-                        </select>
-                    </th>
-                    <th>
-                        <div id="color_scale"></div>
-                    </th>
-                    <th className="heatmapheader">
-                        Label by:
-                        <select id="gsvl_text_property"
-                                onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeTextProperty")} }>
-                            { options }
-                        </select>
-                    </th>
-                    <th className="heatmapheader">
-                        Sort by:
-                        <select id="gsvl_sort_property"
-                                onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeSortProperty")} }>
-                            { options }
-                        </select>
-                    </th>
+                        <th className="heatmapheader right">Color by:</th>
+                        <th className="heatmapheader left">
+                            <select id="gsvl_color_property"
+                                    onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeColorProperty")} }>
+                                { options }
+                            </select>
+                        </th>
+                        <th>
+                            <div id="color_scale">Color scale placeholder</div>
+                        </th>
+                        <th className="heatmapheader right">Label by:</th>
+                        <th className="heatmapheader left">
+                            <select id="gsvl_text_property"
+                                    onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeTextProperty")} }>
+                                { options }
+                            </select>
+                        </th>
+                        <th className="heatmapheader right">Sort by:</th>
+                        <th className="heatmapheader left">
+                            <select id="gsvl_sort_property"
+                                    onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeSortProperty")} }>
+                                { options }
+                            </select>
+                        </th>
 
                     </tr>
                 </thead>
             </table>
-            <table className="heatmapheader">
+            <table>
                 <thead>
                     <tr>
-                        <th className="heatmapheader"> Grid Settings:</th>
-                        <th className="heatmapheader">
-                        Size:
-                        <input id="input_grid_size"
-                               type='number'
-                               onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeTileSize")} }
-                               style={{width: '35px'}}></input>
-                    </th>
-                    <th className="heatmapheader">
-                        Margin:
-                        <input id="input_margin_size"
-                               type='number'
-                               onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeMarginSize")} }
-                               style={{width: '35px'}}/>
-                    </th>
-                    <th className="heatmapheader">
-                        Offset: 
-                        <input id="input_offset_size"
-                               type='number'
-                               onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeOffsetSize")} }
-                               style={{width: '35px'}}/>
-                    </th>
-                    <th className="heatmapheader">
-                    Aspect ratio:
-                    <input id="input_aspect_ratio"
-                           type='number'
-                           onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeAspectRatio")} }
-                           style={{width: '35px'}}/>
-                    </th>
-                    <th className="heatmapheader">
-                        <input id="input_thumnnails"
-                                type='checkbox'
-                                onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeThumbnailsRendering")} }/>
-                        Thumbnails?
-                    </th>
-                    <th>
-                    </th>
+                        <th className="heatmapheader right">Tile Size:</th>
+                        <th className="heatmapheader left">
+                            <input id="input_grid_size"
+                                type='number'
+                                onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeTileSize")} }
+                                style={{width: '35px'}}></input>
+                        </th>
+                        <th className="heatmapheader right">Margin:</th>
+                        <th className="heatmapheader left">
+                            <input id="input_margin_size"
+                                type='number'
+                                onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeMarginSize")} }
+                                style={{width: '35px'}}/>
+                        </th>
+                        <th className="heatmapheader right">Offset:</th>
+                        <th className="heatmapheader left">
+                            <input id="input_offset_size"
+                                type='number'
+                                onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeOffsetSize")} }
+                                style={{width: '35px'}}/>
+                        </th>
+                        <th className="heatmapheader right">Aspect ratio:</th>
+                        <th className="heatmapheader left">
+                            <input id="input_aspect_ratio"
+                                type='number'
+                                onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeAspectRatio")} }
+                                style={{width: '35px'}}/>
+                        </th>
+                        <th className="heatmapheader right">
+                            <input id="input_thumnnails"
+                                    type='checkbox'
+                                    onChange={ (event) => { this.handleGsvlScreenPlotChange(event, "changeThumbnailsRendering")} }/>
+                        </th>
+                        <th className="heatmapheader left">Thumbnails?</th>
                     </tr>
                 </thead>
             </table>
