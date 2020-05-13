@@ -68,7 +68,7 @@ def get_long_or_default(request, name, default):
     val = None
     val_raw = request.GET.get(name, default)
     if val_raw is not None:
-        val = long(val_raw)
+        val = int(val_raw)
     return val
 
 
@@ -84,7 +84,7 @@ def api_field_list(request, plate_id, conn=None, **kwargs):
     params.addId(rlong(plate_id))
     rows = q.projection(sql, params, conn.SERVICE_OPTS)
     return JsonResponse({
-        'plateId': long(plate_id),
+        'plateId': int(plate_id),
         'data': [[unwrap(x), unwrap(y)] for x, y in rows]
     })
 

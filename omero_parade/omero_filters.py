@@ -46,7 +46,7 @@ def get_script(request, script_name, conn):
     elif plate_id and field_id:
         img_ids = get_image_ids(conn, plate_id, field_id)
     else:
-        img_ids = [long(i) for i in image_ids]
+        img_ids = [int(i) for i in image_ids]
     query_service = conn.getQueryService()
 
     if script_name == "ROI_count":
