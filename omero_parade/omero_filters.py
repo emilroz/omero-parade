@@ -66,7 +66,7 @@ def get_script(request, script_name, conn):
             roi_counts[i] = 0
         for i in p:
             roi_counts[i[0].val] = i[1].val
-        values = roi_counts.values()
+        values = list(roi_counts.values())
         min_count = 0
         max_count = 0
         if len(values) > 0:
