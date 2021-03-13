@@ -202,8 +202,8 @@ def get_script(request, script_name, conn):
         """ % (json.dumps(map_values), key_placeholder, js_object_attr,
                js_object_attr)
 
-        keys = map_values.keys()
-        keys.sort(key=lambda x: x.lower())
+        keys = list(map_values.keys())
+        sorted(keys, key=lambda x: x.lower())
 
         filter_params = [{'name': 'key',
                           'type': 'text',
