@@ -146,12 +146,17 @@ def get_data(request, data_name, conn=None, **kwargs):
         )
 
     modules = parade_settings.PARADE_FILTERS
-
+    exception_info = ""
+    try_info = ""
     for m in modules:
         try:
             module = __import__('%s.data_providers' % m, fromlist=[''])
+            print("Checking module: {}".format(module))
+            try_info += "Checking module: {}".format(module) + "\n"
             if hasattr(module, 'get_dataproviders'):
                 dp = module.get_dataproviders(request, conn)
+                print("Checking providers: {}".format(dp))
+                try_info += "Checking providers: {}".format(dp) + "\n"
                 if data_name in dp:
                     data = module.get_data(request, data_name, conn)
                     values = numpy.array(list(data.values()))
@@ -168,6 +173,7 @@ def get_data(request, data_name, conn=None, **kwargs):
                         'histogram': histogram.tolist()
                     })
         except ImportError:
+            expection_info = "ImportError"
             pass
 
-    return JsonResponse({'Error': 'Data provider not found'})
+    return JsonResponse({'Error': 'Data provider not found', 'data_name': str(data_name), 'try_info': str(try_info), 'exception': str(exception_info)})
