@@ -139,7 +139,7 @@ def dataprovider_list(request, conn=None, **kwargs):
 @login_required()
 def get_data(request, data_name, conn=None, **kwargs):
     try:
-        data_name = b64decode(data_name)
+        data_name = b64decode(data_name).decode('utf-8')
     except Exception:
         return JsonResponse(
             {'Error': 'Could not Base64 decode: %s' % data_name}
@@ -154,7 +154,7 @@ def get_data(request, data_name, conn=None, **kwargs):
                 dp = module.get_dataproviders(request, conn)
                 if data_name in dp:
                     data = module.get_data(request, data_name, conn)
-                    values = numpy.array(data.values())
+                    values = numpy.array(list(data.values()))
                     bins = 10
                     if NUMPY_GT_1_11_0:
                         # numpy.histogram() only supports bin calculation
